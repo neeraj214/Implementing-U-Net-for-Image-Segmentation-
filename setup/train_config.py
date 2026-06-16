@@ -7,10 +7,10 @@ if gpus:
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
     DEVICE = '/GPU:0'
-    print(f"✅ Using GPU: {gpus[0].name}")
+    print(f"[OK] Using GPU: {gpus[0].name}")
 else:
     DEVICE = '/CPU:0'
-    print("⚠️  Using CPU - training will be slow")
+    print("[WARNING] Using CPU - training will be slow")
 
 # ── PATHS ──────────────────────────────────────────────
 BASE_DIR        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
