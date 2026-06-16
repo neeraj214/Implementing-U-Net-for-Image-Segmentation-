@@ -24,7 +24,7 @@ def preprocess(sample):
     mask = tf.cast(mask, tf.int32) - 1  # remap 1,2,3 → 0,1,2
     return image, mask
 
-def load_data():
+def get_datasets():
     print("Loading Oxford-IIIT Pet dataset...")
     dataset, info = tfds.load('oxford_iiit_pet', with_info=True)
     
@@ -87,4 +87,4 @@ def visualize_samples(dataset):
         print(f"Saved sample visualization to {plot_path}")
 
 if __name__ == '__main__':
-    train_dataset, test_dataset = load_data()
+    train_dataset, test_dataset = get_datasets()

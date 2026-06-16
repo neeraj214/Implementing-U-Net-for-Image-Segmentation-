@@ -1,0 +1,93 @@
+import os
+import sys
+import json
+import time
+import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import SparseCategoricalCrossentropy
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+
+# Ensure the project root is in the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from setup.train_config import (
+    IMAGE_SIZE, CHANNELS, NUM_CLASSES, UNET_FILTERS, UNET_DROPOUT,
+    UNET_LR, UNET_PATIENCE, UNET_EPOCHS, MODELS_DIR, METRICS_DIR, DEVICE
+)
+from src.unet_model import build_unet, MeanIoU
+from src.load_dataset import get_datasets
+
+def main():
+    print("Loading datasets...")
+    train_ds, test_ds = get_datasets()
+    
+    print(f"Building U-Net on {DEVICE}...")
+    with tf.device(DEVICE):
+        model = build_unet(
+            input_shape=(IMAGE_SIZE, IMAGE_SIZE, CHANNELS),
+            num_classes=NUM_CLASSES,
+            filters=UNET_FILTERS,
+            dropout=UNET_DROPOUT
+        )
+        
+        model.compile(
+            optimizer=Adam(learning_rate=UNET_LR),
+            loss=SparseCategoricalCrossentropy(),
+            metrics=['accuracy', MeanIoU(num_classes=NUM_CLASSES)]
+        )
+        
+        os.makedirs(MODELS_DIR, exist_ok=True)
+        os.makedirs(METRICS_DIR, exist_ok=True)
+        
+        best_model_path = os.path.join(MODELS_DIR, 'unet_best.h5')
+        
+        callbacks = [
+            EarlyStopping(patience=UNET_PATIENCE, restore_best_weights=True),
+            ModelCheckpoint(best_model_path, save_best_only=True),
+            ReduceLROnPlateau(patience=3, factor=0.5)
+        ]
+        
+        print("Starting training...")
+        start_time = time.time()
+        history = model.fit(
+            train_ds,
+            validation_data=test_ds,
+            epochs=UNET_EPOCHS,
+            callbacks=callbacks
+        )
+        training_time = time.time() - start_time
+        
+        # Save history
+        history_path = os.path.join(METRICS_DIR, 'train_history.json')
+        # Convert values to float for JSON serialization
+        history_dict = {k: [float(val) for val in v] for k, v in history.history.items()}
+        with open(history_path, 'w') as f:
+            json.dump(history_dict, f, indent=4)
+            
+        # Save final metadata
+        final_epoch = len(history.epoch) - 1
+        val_iou_key = [k for k in history.history.keys() if 'mean_io_u' in k and 'val' in k][0]
+        train_iou_key = [k for k in history.history.keys() if 'mean_io_u' in k and 'val' not in k][0]
+        
+        meta_data = {
+            "final_accuracy": float(history.history['accuracy'][final_epoch]),
+            "final_iou": float(history.history[train_iou_key][final_epoch]),
+            "val_accuracy": float(history.history['val_accuracy'][final_epoch]),
+            "val_iou": float(history.history[val_iou_key][final_epoch]),
+            "epochs_trained": final_epoch + 1,
+            "training_time": training_time
+        }
+        
+        meta_path = os.path.join(METRICS_DIR, 'train_meta.json')
+        with open(meta_path, 'w') as f:
+            json.dump(meta_data, f, indent=4)
+            
+        print("\n--- Training Summary ---")
+        print(f"Time: {training_time:.2f}s")
+        print(f"Epochs: {meta_data['epochs_trained']}")
+        print(f"Final Val Accuracy: {meta_data['val_accuracy']:.4f}")
+        print(f"Final Val IoU: {meta_data['val_iou']:.4f}")
+        print(f"Best model saved at: {best_model_path}")
+
+if __name__ == '__main__':
+    main()
