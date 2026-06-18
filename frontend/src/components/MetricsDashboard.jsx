@@ -44,17 +44,25 @@ export default function MetricsDashboard() {
     );
   }
 
-  // Fallback data if metrics API doesn't return everything required
-  const m = metrics || {};
-  const testAcc = m.test_accuracy || 0;
-  const meanIoU = m.mean_iou || 0;
-  const epochs = m.epochs_trained || 0;
-  const trainTime = m.training_time || '0h 0m';
+  const evalData = metrics?.eval_results || {};
+  const trainData = metrics?.train_meta || {};
   
+  const testAcc = evalData.test_accuracy || 0;
+  const meanIoU = evalData.mean_iou || 0;
+  const epochs = trainData.epochs_trained || 0;
+  
+  let trainTime = '0m 0s';
+  if (trainData.training_time) {
+    const mins = Math.floor(trainData.training_time / 60);
+    const secs = Math.floor(trainData.training_time % 60);
+    trainTime = `${mins}m ${secs}s`;
+  }
+  
+  const perClassIou = evalData.per_class_iou || {};
   const iouData = [
-    { name: 'Pet', iou: m.pet_iou || 0, color: COLORS.Pet },
-    { name: 'Background', iou: m.background_iou || 0, color: COLORS.Background },
-    { name: 'Border', iou: m.border_iou || 0, color: COLORS.Border },
+    { name: 'Pet', iou: perClassIou.Pet || 0, color: COLORS.Pet },
+    { name: 'Background', iou: perClassIou.Background || 0, color: COLORS.Background },
+    { name: 'Border', iou: perClassIou.Border || 0, color: COLORS.Border },
   ];
 
   return (
