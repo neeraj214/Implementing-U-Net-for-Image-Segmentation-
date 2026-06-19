@@ -1,9 +1,13 @@
 import os
+import sys
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+
+# Ensure the project root is in the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 plt.switch_backend('agg')
 
