@@ -66,14 +66,36 @@ def main():
             
         # Save final metadata
         final_epoch = len(history.epoch) - 1
-        val_iou_key = [k for k in history.history.keys() if 'mean_io_u' in k and 'val' in k][0]
-        train_iou_key = [k for k in history.history.keys() if 'mean_io_u' in k and 'val' not in k][0]
+        
+        # Keras names MeanIoU metric as 'mean_io_u' or 'mean_io_u_1'
+        def _find_history_key(h, candidates):
+            for c in candidates:
+                if c in h:
+                    return c
+            for c in candidates:
+                for k in h:
+                    if c in k and 'val' not in k:
+                        return k
+            return None
+
+        def _find_val_history_key(h, candidates):
+            for c in candidates:
+                if c in h:
+                    return c
+            for c in candidates:
+                for k in h:
+                    if c in k:
+                        return k
+            return None
+
+        train_iou_key = _find_history_key(history.history, ['iou', 'mean_io_u', 'mean_iou'])
+        val_iou_key = _find_val_history_key(history.history, ['val_iou', 'val_mean_io_u', 'val_mean_iou'])
         
         meta_data = {
             "final_accuracy": float(history.history['accuracy'][final_epoch]),
-            "final_iou": float(history.history[train_iou_key][final_epoch]),
+            "final_iou": float(history.history[train_iou_key][final_epoch]) if train_iou_key else 0.0,
             "val_accuracy": float(history.history['val_accuracy'][final_epoch]),
-            "val_iou": float(history.history[val_iou_key][final_epoch]),
+            "val_iou": float(history.history[val_iou_key][final_epoch]) if val_iou_key else 0.0,
             "epochs_trained": final_epoch + 1,
             "training_time": training_time
         }
