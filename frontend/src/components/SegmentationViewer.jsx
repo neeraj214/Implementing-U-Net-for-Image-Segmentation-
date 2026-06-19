@@ -52,9 +52,9 @@ export default function SegmentationViewer() {
   const formatChartData = (distribution) => {
     if (!distribution) return [];
     return [
-      { name: 'Pet', value: distribution.pet || 0, color: COLORS.Pet },
-      { name: 'Background', value: distribution.background || 0, color: COLORS.Background },
-      { name: 'Border', value: distribution.border || 0, color: COLORS.Border },
+      { name: 'Pet', value: distribution.Pet || 0, color: COLORS.Pet },
+      { name: 'Background', value: distribution.Background || 0, color: COLORS.Background },
+      { name: 'Border', value: distribution.Border || 0, color: COLORS.Border },
     ].filter(d => d.value > 0);
   };
 
