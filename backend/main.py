@@ -3,6 +3,8 @@ import sys
 import json
 import base64
 import io
+from contextlib import asynccontextmanager
+
 import numpy as np
 import tensorflow as tf
 from PIL import Image
@@ -16,16 +18,6 @@ if BASE_DIR not in sys.path:
 
 from utils.utils import dice_coef, dice_loss, iou
 
-app = FastAPI(title="U-Net Segmentation API")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 CLASS_NAMES = ['Pet', 'Background', 'Border']
 # Colors in RGB: Red, Green, Blue
 CLASS_COLORS = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
@@ -35,8 +27,10 @@ METRICS_DIR = os.path.join(BASE_DIR, 'outputs', 'metrics')
 
 model = None
 
-@app.on_event("startup")
-async def load_model():
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load ML model on startup and clean up on shutdown."""
     global model
     custom_objs = {
         'dice_coef': dice_coef,
@@ -48,7 +42,22 @@ async def load_model():
         model = tf.keras.models.load_model(MODEL_PATH, custom_objects=custom_objs)
         print("Model loaded successfully.")
     else:
-        print(f"Warning: Model not found at {MODEL_PATH}")
+        print(f"Warning: Model not found at {MODEL_PATH}. Train the model first.")
+    yield
+    # Cleanup (if needed) goes here
+    model = None
+
+
+app = FastAPI(title="U-Net Segmentation API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/health")
 async def health_check():
