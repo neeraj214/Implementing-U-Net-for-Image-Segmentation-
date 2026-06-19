@@ -1,13 +1,18 @@
 import os
+import sys
 import json
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
+# Ensure the project root is in the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from setup.train_config import (
     IMAGE_SIZE, NUM_CLASSES, CHANNELS, UNET_BATCH_SIZE, MODELS_DIR, METRICS_DIR, CLASS_NAMES
 )
 from utils.utils import dice_coef, dice_loss, iou
+
 
 def normalize(input_image, input_mask):
     input_image = tf.cast(input_image, tf.float32) / 255.0
