@@ -1,18 +1,25 @@
 import { useState } from 'react';
-import { predictImage } from '../api/client';
+import { segmentImage } from '../api/unetApi';
 
+/**
+ * ImageUploader – legacy fallback upload component.
+ * Uses the /api/segment endpoint via unetApi.js.
+ * The main segmentation UI is in SegmentationViewer.jsx.
+ */
 const ImageUploader = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
-  const [predictionUrl, setPredictionUrl] = useState(null);
+  const [maskUrl, setMaskUrl] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
       setImageUrl(URL.createObjectURL(file));
-      setPredictionUrl(null);
+      setMaskUrl(null);
+      setError(null);
     }
   };
 
@@ -20,12 +27,21 @@ const ImageUploader = () => {
     e.preventDefault();
     if (!selectedFile) return;
     setLoading(true);
+    setError(null);
     try {
-      const blob = await predictImage(selectedFile);
-      const url = URL.createObjectURL(blob);
-      setPredictionUrl(url);
-    } catch (error) {
-      console.error('Error predicting image:', error);
+      const data = await segmentImage(selectedFile);
+      // Convert base64 mask to an object URL for display
+      const byteString = atob(data.mask_base64);
+      const arrayBuffer = new ArrayBuffer(byteString.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([uint8Array], { type: 'image/png' });
+      setMaskUrl(URL.createObjectURL(blob));
+    } catch (err) {
+      console.error('Error segmenting image:', err);
+      setError(err.message || 'Segmentation failed');
     } finally {
       setLoading(false);
     }
@@ -54,12 +70,17 @@ const ImageUploader = () => {
             backgroundColor: '#007bff',
             color: 'white',
             border: 'none',
-            borderRadius: '5px'
+            borderRadius: '5px',
           }}
         >
           {loading ? 'Processing...' : 'Segment Image'}
         </button>
       </form>
+
+      {error && (
+        <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>
+      )}
+
       {imageUrl && (
         <div style={{ display: 'flex', justifyContent: 'space-around', gap: '20px' }}>
           <div style={{ textAlign: 'center' }}>
@@ -70,12 +91,12 @@ const ImageUploader = () => {
               style={{ maxWidth: '300px', borderRadius: '8px' }}
             />
           </div>
-          {predictionUrl && (
+          {maskUrl && (
             <div style={{ textAlign: 'center' }}>
-              <h3>Segmented Image</h3>
+              <h3>Segmented Mask</h3>
               <img
-                src={predictionUrl}
-                alt="Prediction"
+                src={maskUrl}
+                alt="Segmentation Mask"
                 style={{ maxWidth: '300px', borderRadius: '8px' }}
               />
             </div>
