@@ -14,6 +14,19 @@ except ImportError:
     METRICS_DIR = os.path.join(BASE_DIR, 'outputs', 'metrics')
     PLOTS_DIR = os.path.join(BASE_DIR, 'outputs', 'plots')
 
+def _find_key(history, candidates):
+    """Return the first matching key from candidates list, or None."""
+    for candidate in candidates:
+        if candidate in history:
+            return candidate
+    # Also do a partial-match search for flexibility
+    for candidate in candidates:
+        for k in history:
+            if candidate in k:
+                return k
+    return None
+
+
 def plot_training_curves():
     history_path = os.path.join(METRICS_DIR, 'train_history.json')
     if not os.path.exists(history_path):
@@ -29,6 +42,10 @@ def plot_training_curves():
     if not epochs:
         print("Error: Empty training history.")
         return
+
+    # Keras names MeanIoU metric as 'mean_io_u' or 'mean_io_u_1' (not 'iou')
+    iou_key = _find_key(history, ['iou', 'mean_io_u', 'mean_iou'])
+    val_iou_key = _find_key(history, ['val_iou', 'val_mean_io_u', 'val_mean_iou'])
 
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
     
@@ -58,10 +75,10 @@ def plot_training_curves():
 
     # [1,0] Train vs Val IoU
     ax = axes[1, 0]
-    if 'iou' in history:
-        ax.plot(epochs, history['iou'], label='Train IoU', color='blue', linewidth=2)
-    if 'val_iou' in history:
-        ax.plot(epochs, history['val_iou'], label='Val IoU', color='orange', linewidth=2)
+    if iou_key and iou_key in history:
+        ax.plot(epochs, history[iou_key], label='Train IoU', color='blue', linewidth=2)
+    if val_iou_key and val_iou_key in history:
+        ax.plot(epochs, history[val_iou_key], label='Val IoU', color='orange', linewidth=2)
     ax.set_title('Intersection over Union (IoU)')
     ax.set_xlabel('Epoch')
     ax.set_ylabel('IoU')
@@ -94,9 +111,10 @@ def plot_training_curves():
         best_acc_epoch = history['val_accuracy'].index(max(history['val_accuracy'])) + 1
         print(f"Best Val Accuracy Epoch: {best_acc_epoch} (Value: {max(history['val_accuracy']):.4f})")
     
-    if 'val_iou' in history and history['val_iou']:
-        best_iou_epoch = history['val_iou'].index(max(history['val_iou'])) + 1
-        print(f"Best Val IoU Epoch: {best_iou_epoch} (Value: {max(history['val_iou']):.4f})")
+    if val_iou_key and val_iou_key in history and history[val_iou_key]:
+        val_iou_vals = history[val_iou_key]
+        best_iou_epoch = val_iou_vals.index(max(val_iou_vals)) + 1
+        print(f"Best Val IoU Epoch: {best_iou_epoch} (Value: {max(val_iou_vals):.4f})")
 
 if __name__ == "__main__":
     plot_training_curves()
