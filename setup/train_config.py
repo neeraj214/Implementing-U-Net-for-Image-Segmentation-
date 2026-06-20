@@ -41,3 +41,21 @@ RANDOM_SEED       = 42
 CLASS_NAMES = ['Pet', 'Background', 'Border']
 
 tf.random.set_seed(RANDOM_SEED)
+
+def verify_directories():
+    """Verify and initialize output directories if they do not exist."""
+    directories = {
+        "Models Directory": MODELS_DIR,
+        "Metrics Directory": METRICS_DIR,
+        "Plots Directory": PLOTS_DIR,
+        "Predictions Directory": PREDICTIONS_DIR,
+        "Samples Directory": SAMPLES_DIR
+    }
+    for name, path in directories.items():
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+            print(f"[INFO] Created {name} at: {path}")
+
+# Run verification automatically
+verify_directories()
+
