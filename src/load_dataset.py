@@ -83,11 +83,13 @@ def get_datasets() -> tuple:
     return train_ds, test_ds
 
 def visualize_samples(dataset):
+    """Save a sample visualization grid showing original images alongside ground truth masks."""
     os.makedirs(PLOTS_DIR, exist_ok=True)
     
     # Take one batch and select the first 3 images
     for images, masks in dataset.take(1):
-        fig, axes = plt.subplots(3, 2, figsize=(8, 12))
+        fig, axes = plt.subplots(3, 2, figsize=(9, 12))
+        fig.suptitle("Oxford-IIIT Pet Dataset - Training Samples", fontsize=16, fontweight='bold', y=0.98)
         
         # Colormap: 0=red, 1=green, 2=blue
         cmap = ListedColormap(['red', 'green', 'blue'])
@@ -95,17 +97,17 @@ def visualize_samples(dataset):
         for i in range(3):
             # Original Image
             axes[i, 0].imshow(images[i].numpy())
-            axes[i, 0].set_title("Image")
+            axes[i, 0].set_title(f"Sample {i+1}: Original Image", fontsize=12)
             axes[i, 0].axis('off')
             
             # Mask
-            axes[i, 1].imshow(masks[i].numpy().squeeze(), cmap=cmap, vmin=0, vmax=2)
-            axes[i, 1].set_title("Ground Truth Mask")
+            im = axes[i, 1].imshow(masks[i].numpy().squeeze(), cmap=cmap, vmin=0, vmax=2)
+            axes[i, 1].set_title(f"Sample {i+1}: Ground Truth Mask", fontsize=12)
             axes[i, 1].axis('off')
             
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
         plot_path = os.path.join(PLOTS_DIR, 'sample_dataset.png')
-        plt.savefig(plot_path)
+        plt.savefig(plot_path, dpi=150, bbox_inches='tight')
         plt.close()
         print(f"Saved sample visualization to {plot_path}")
 
