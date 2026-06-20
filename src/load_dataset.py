@@ -13,7 +13,21 @@ from setup.train_config import (
     IMAGE_SIZE, UNET_BATCH_SIZE, PLOTS_DIR, METRICS_DIR, NUM_CLASSES
 )
 
-def preprocess(sample):
+def preprocess(sample: dict) -> tuple:
+    """
+    Preprocess a raw dataset sample by resizing and normalizing.
+
+    Resizes images and masks to target IMAGE_SIZE, normalizes image pixels
+    to [0.0, 1.0], and remaps segmentation mask class labels from 1,2,3 to 0,1,2.
+
+    Args:
+        sample (dict): Raw dictionary containing 'image' and 'segmentation_mask' keys.
+
+    Returns:
+        tuple: (preprocessed_image, preprocessed_mask) where:
+            - preprocessed_image: Float tensor of shape (IMAGE_SIZE, IMAGE_SIZE, 3)
+            - preprocessed_mask: Int tensor of shape (IMAGE_SIZE, IMAGE_SIZE, 1)
+    """
     image = tf.image.resize(sample['image'], [IMAGE_SIZE, IMAGE_SIZE])
     image = tf.cast(image, tf.float32) / 255.0
     
@@ -24,7 +38,16 @@ def preprocess(sample):
     mask = tf.cast(mask, tf.int32) - 1  # remap 1,2,3 → 0,1,2
     return image, mask
 
-def get_datasets():
+def get_datasets() -> tuple:
+    """
+    Load the Oxford-IIIT Pet dataset and build TF dataset pipelines.
+
+    Loads training and testing splits, performs resizing/normalization, sets up
+    caching and prefetching, and generates sample visualizations.
+
+    Returns:
+        tuple: (train_ds, test_ds) as tf.data.Dataset pipelines ready for training.
+    """
     print("Loading Oxford-IIIT Pet dataset...")
     dataset, info = tfds.load('oxford_iiit_pet', with_info=True)
     
