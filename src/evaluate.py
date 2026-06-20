@@ -32,6 +32,11 @@ def evaluate_model():
     test_dataset = test_images.batch(UNET_BATCH_SIZE)
     
     model_path = os.path.join(MODELS_DIR, 'unet_best.h5')
+    if not os.path.exists(model_path):
+        print(f"\n[ERROR] Model file not found at: {model_path}")
+        print("Please train the model first by running: python src/train.py\n")
+        sys.exit(1)
+        
     print(f"Loading model from: {model_path}")
     
     # Custom objects required to load model correctly
