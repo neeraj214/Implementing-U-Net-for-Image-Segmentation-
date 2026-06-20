@@ -7,7 +7,18 @@ from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, C
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from setup.train_config import IMAGE_SIZE, CHANNELS, NUM_CLASSES, UNET_FILTERS, UNET_DROPOUT, PLOTS_DIR
 
-def unet_block(x, filters, dropout=0.0):
+def unet_block(x: tf.Tensor, filters: int, dropout: float = 0.0) -> tf.Tensor:
+    """
+    Standard U-Net Conv2D block with Batch Normalization and optional Dropout.
+
+    Args:
+        x (tf.Tensor): Input tensor.
+        filters (int): Number of filters for the Conv2D layers.
+        dropout (float): Dropout rate. Defaults to 0.0 (no dropout).
+
+    Returns:
+        tf.Tensor: Output activation tensor.
+    """
     x = Conv2D(filters, 3, activation='relu', padding='same')(x)
     x = BatchNormalization()(x)
     x = Conv2D(filters, 3, activation='relu', padding='same')(x)
@@ -16,7 +27,22 @@ def unet_block(x, filters, dropout=0.0):
         x = Dropout(dropout)(x)
     return x
 
-def build_unet(input_shape=(128, 128, 3), num_classes=3, filters=64, dropout=0.3):
+def build_unet(input_shape: tuple = (128, 128, 3), num_classes: int = 3, filters: int = 64, dropout: float = 0.3) -> tf.keras.Model:
+    """
+    Build a standard U-Net Architecture for Image Segmentation.
+
+    It consists of an Encoder (contracting path), a Bottleneck, and a
+    Decoder (expansive path) with skip connections.
+
+    Args:
+        input_shape (tuple): Dimension of the input image (H, W, C). Defaults to (128, 128, 3).
+        num_classes (int): Number of target semantic classes. Defaults to 3.
+        filters (int): Base filter size. Doubles at each encoding level. Defaults to 64.
+        dropout (float): Dropout probability for deeper layers. Defaults to 0.3.
+
+    Returns:
+        tf.keras.Model: Compiled or uncompiled Keras Model instance.
+    """
     inputs = Input(shape=input_shape)
     
     # ENCODER
