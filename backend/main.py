@@ -3,6 +3,7 @@ import sys
 import json
 import base64
 import io
+import logging
 from contextlib import asynccontextmanager
 
 import numpy as np
@@ -10,6 +11,14 @@ import tensorflow as tf
 from PIL import Image
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("unet-backend")
 
 # Add root project dir to python path to import utils
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,11 +47,11 @@ async def lifespan(app: FastAPI):
         'iou': iou
     }
     if os.path.exists(MODEL_PATH):
-        print(f"Loading model from {MODEL_PATH}")
+        logger.info(f"Loading model from {MODEL_PATH}")
         model = tf.keras.models.load_model(MODEL_PATH, custom_objects=custom_objs)
-        print("Model loaded successfully.")
+        logger.info("Model loaded successfully.")
     else:
-        print(f"Warning: Model not found at {MODEL_PATH}. Train the model first.")
+        logger.warning(f"Model not found at {MODEL_PATH}. Train the model first.")
     yield
     # Cleanup (if needed) goes here
     model = None
@@ -82,12 +91,15 @@ async def get_metrics():
 @app.post("/segment")
 async def segment_image(file: UploadFile = File(...)):
     if model is None:
+        logger.error("Segment request failed: Model is not loaded.")
         raise HTTPException(status_code=503, detail="Model is not loaded.")
         
     try:
+        logger.info(f"Received segmentation request for file: {file.filename}")
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         original_size = image.size # (width, height)
+        logger.info(f"Processing image with original size: {original_size}")
         
         # Resize to 128x128
         image_resized = image.resize((128, 128))
@@ -121,6 +133,7 @@ async def segment_image(file: UploadFile = File(...)):
         mask_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
         
         dominant_class = max(class_distribution, key=class_distribution.get)
+        logger.info(f"Segmentation completed successfully. Dominant class: {dominant_class}")
         
         return {
             "original_size": [original_size[0], original_size[1]],
@@ -130,4 +143,6 @@ async def segment_image(file: UploadFile = File(...)):
         }
         
     except Exception as e:
+        logger.exception(f"Error processing segmentation request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
