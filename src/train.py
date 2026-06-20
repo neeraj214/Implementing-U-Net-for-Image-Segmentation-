@@ -41,6 +41,15 @@ def main():
         
         best_model_path = os.path.join(MODELS_DIR, 'unet_best.h5')
         
+        if os.path.exists(best_model_path):
+            print(f"Found existing model weights at {best_model_path}.")
+            print("Loading weights to continue training...")
+            try:
+                model.load_weights(best_model_path)
+                print("Successfully loaded weights.")
+            except Exception as e:
+                print(f"Warning: Failed to load weights ({e}). Training will start from scratch.")
+        
         callbacks = [
             EarlyStopping(patience=UNET_PATIENCE, restore_best_weights=True),
             ModelCheckpoint(best_model_path, save_best_only=True),
