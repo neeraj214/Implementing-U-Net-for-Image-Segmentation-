@@ -28,8 +28,16 @@ def predict_mask(image_path, model_weights_path=None):
     Returns:
         predicted_mask: numpy array of shape (H, W) with integer class labels.
     """
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Input image path does not exist: {image_path}")
+    if not os.path.isfile(image_path):
+        raise ValueError(f"Input image path is not a file: {image_path}")
+
     # Load and preprocess image
-    original_img = Image.open(image_path).convert("RGB")
+    try:
+        original_img = Image.open(image_path).convert("RGB")
+    except Exception as e:
+        raise ValueError(f"Failed to open image file {image_path}. Error: {e}")
     img = original_img.resize((IMAGE_SIZE, IMAGE_SIZE))
     img_np = np.array(img) / 255.0
     img_input = np.expand_dims(img_np, axis=0).astype(np.float32)
