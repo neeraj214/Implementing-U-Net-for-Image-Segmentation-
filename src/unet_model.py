@@ -43,6 +43,15 @@ def build_unet(input_shape: tuple = (128, 128, 3), num_classes: int = 3, filters
     Returns:
         tf.keras.Model: Compiled or uncompiled Keras Model instance.
     """
+    if len(input_shape) != 3:
+        raise ValueError(f"input_shape must be a 3-element tuple (height, width, channels), got {input_shape}")
+    if num_classes <= 0:
+        raise ValueError(f"num_classes must be a positive integer, got {num_classes}")
+    if filters <= 0:
+        raise ValueError(f"filters must be a positive integer, got {filters}")
+    if not (0.0 <= dropout <= 1.0):
+        raise ValueError(f"dropout rate must be between 0.0 and 1.0, got {dropout}")
+
     inputs = Input(shape=input_shape)
     
     # ENCODER
