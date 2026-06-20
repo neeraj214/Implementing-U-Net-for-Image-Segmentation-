@@ -25,9 +25,9 @@ if gpus:
     with tf.device('/GPU:0'):
         a = tf.random.normal([2000, 2000])
         b = tf.matmul(a, a)
-    print(f"✅ GPU test passed - shape: {b.shape}")
-    print("✅ Ready for U-Net training")
+    print("[OK] GPU test passed - shape: " + str(b.shape))
+    print("[OK] Ready for U-Net training")
 else:
-    print("⚠️  No GPU detected")
+    print("[WARNING] No GPU detected")
     print("Install CUDA 11.8 + cuDNN 8.6 for RTX 2050")
     print("See setup/gpu_setup_guide.md")
