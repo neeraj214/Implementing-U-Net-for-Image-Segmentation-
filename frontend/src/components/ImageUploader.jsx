@@ -16,6 +16,12 @@ const ImageUploader = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Selected file must be an image.');
+        setSelectedFile(null);
+        setImageUrl(null);
+        return;
+      }
       setSelectedFile(file);
       setImageUrl(URL.createObjectURL(file));
       setMaskUrl(null);
