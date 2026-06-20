@@ -48,6 +48,7 @@ def plot_training_curves():
     val_iou_key = _find_key(history, ['val_iou', 'val_mean_io_u', 'val_mean_iou'])
 
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+    fig.suptitle("U-Net Training Performance Curves", fontsize=20, fontweight='bold', y=0.98)
     
     # [0,0] Train vs Val accuracy
     ax = axes[0, 0]
@@ -55,10 +56,10 @@ def plot_training_curves():
         ax.plot(epochs, history['accuracy'], label='Train Accuracy', color='blue', linewidth=2)
     if 'val_accuracy' in history:
         ax.plot(epochs, history['val_accuracy'], label='Val Accuracy', color='orange', linewidth=2)
-    ax.set_title('Accuracy')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Accuracy')
-    ax.legend()
+    ax.set_title('Accuracy', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Epoch', fontsize=12)
+    ax.set_ylabel('Accuracy', fontsize=12)
+    ax.legend(fontsize=11)
     ax.grid(True, linestyle='--', alpha=0.7)
 
     # [0,1] Train vs Val loss
@@ -67,10 +68,10 @@ def plot_training_curves():
         ax.plot(epochs, history['loss'], label='Train Loss', color='blue', linewidth=2)
     if 'val_loss' in history:
         ax.plot(epochs, history['val_loss'], label='Val Loss', color='orange', linewidth=2)
-    ax.set_title('Loss')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Loss')
-    ax.legend()
+    ax.set_title('Loss', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Epoch', fontsize=12)
+    ax.set_ylabel('Loss', fontsize=12)
+    ax.legend(fontsize=11)
     ax.grid(True, linestyle='--', alpha=0.7)
 
     # [1,0] Train vs Val IoU
@@ -79,27 +80,27 @@ def plot_training_curves():
         ax.plot(epochs, history[iou_key], label='Train IoU', color='blue', linewidth=2)
     if val_iou_key and val_iou_key in history:
         ax.plot(epochs, history[val_iou_key], label='Val IoU', color='orange', linewidth=2)
-    ax.set_title('Intersection over Union (IoU)')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('IoU')
-    ax.legend()
+    ax.set_title('Intersection over Union (IoU)', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Epoch', fontsize=12)
+    ax.set_ylabel('IoU', fontsize=12)
+    ax.legend(fontsize=11)
     ax.grid(True, linestyle='--', alpha=0.7)
 
     # [1,1] Learning rate over epochs
     ax = axes[1, 1]
     if 'lr' in history:
         ax.plot(epochs, history['lr'], label='Learning Rate', color='green', linewidth=2)
-        ax.set_title('Learning Rate')
-        ax.set_xlabel('Epoch')
-        ax.set_ylabel('Learning Rate')
-        ax.legend()
+        ax.set_title('Learning Rate', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Epoch', fontsize=12)
+        ax.set_ylabel('Learning Rate', fontsize=12)
+        ax.legend(fontsize=11)
         ax.grid(True, linestyle='--', alpha=0.7)
     else:
-        ax.set_title('Learning Rate (Not Available)')
+        ax.set_title('Learning Rate (Not Available)', fontsize=14, fontweight='bold')
         ax.set_xticks([])
         ax.set_yticks([])
 
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
     os.makedirs(PLOTS_DIR, exist_ok=True)
     save_path = os.path.join(PLOTS_DIR, 'training_curves.png')
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
