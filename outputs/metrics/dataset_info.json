@@ -1,0 +1,6 @@
+{
+    "train_size": 3680,
+    "test_size": 3669,
+    "image_size": 128,
+    "num_classes": 3
+}
